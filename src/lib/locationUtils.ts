@@ -20,20 +20,23 @@ export const LOCATION_TYPES: readonly LocationType[] = [
  * @returns Normalized location type
  */
 
-export const normalizeLocation = (location: string | undefined | null): LocationType => {
-    if (!location) return 'other';
+export const normalizeProduct = (product: any) => {
+    // Ensure location is standardized
+    const location = product.location?.toString().toLowerCase().trim() || 'other';
 
-    const loc = location.toLowerCase().trim();
+    // Determine category based on location
+    let category = 'other';
+    if (location.includes('rest') || location.includes('dining')) category = 'restaurant';
+    if (location.includes('bakery') || location.includes('bake')) category = 'bakery';
 
-    if (loc.includes('restaurant') || loc.includes('rest') || loc.includes('dining')) {
-        return 'restaurant';
-    }
-
-    if (loc.includes('bakery') || loc.includes('bake') || loc.includes('bread')) {
-        return 'bakery';
-    }
-
-    return 'other';
+    return {
+        ...product,
+        quantity: Number(product.quantity) || 0,
+        minQuantity: Number(product.minQuantity) || 0,
+        price: Number(product.price) || 0,
+        category, // This will be either 'restaurant', 'bakery', or 'other'
+        originalLocation: location // Keep original for reference
+    };
 };
 
 export const filterByLocation = (products: Product[], location: LocationType): Product[] => {
