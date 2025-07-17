@@ -63,16 +63,11 @@ export function isProduct(obj: any): obj is Product {
 export interface Product {
     id: string;
     name: string;
-    description?: string;
     quantity: number;
     minQuantity: number;
     price: number;
-    location: string;
-    createdAt?: string;
-    updatedAt?: string;
-    category?: string;
-    barcode?: string;
-    supplier?: string;
+    location: string;  // Raw location from database
+    category?: string; // Will be added during normalization
 }
 
 export interface ProductStats {

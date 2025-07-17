@@ -60,3 +60,13 @@ export function isProduct(obj: any): obj is Product {
         typeof obj.name === 'string' &&
         typeof obj.quantity === 'number';
 }
+
+export interface Product {
+    id: string;
+    name: string;
+    quantity: number;
+    minQuantity: number;
+    price: number;
+    location: string;  // Raw location from database
+    category?: string; // Will be added during normalization
+}

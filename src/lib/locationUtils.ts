@@ -1,62 +1,37 @@
-/**
- * Utilities for handling product location data normalization and validation
- */
+import { Product } from '@/types/product';
 
-type LocationType = 'restaurant' | 'bakery' | 'other';
+type ProductCategory = 'restaurant' | 'bakery' | 'other';
 
-export type LocationType = 'restaurant' | 'bakery' | 'store' | 'warehouse' | 'other';
+export const normalizeProduct = (product: any): Product => {
+    const location = product.location?.toString().trim().toLowerCase() || 'other';
 
-export const LOCATION_TYPES: readonly LocationType[] = [
-    'restaurant',
-    'bakery',
-    'store',
-    'warehouse',
-    'other'
-] as const;
+    // Determine category based on location
+    let category: ProductCategory = 'other';
+    if (/rest|resto|dining|kitchen/.test(location)) category = 'restaurant';
+    if (/bakery|bake|bread|pastry/.test(location)) category = 'bakery';
 
-/**
- * Normalizes location strings to standard types
- * @param location Raw location string from database
- * @returns Normalized location type
- */
-
-export const normalizeLocation = (location: string | undefined | null): LocationType => {
-    if (!location) return 'other';
-
-    const loc = location.toLowerCase().trim();
-
-    if (loc.includes('restaurant') || loc.includes('rest') || loc.includes('dining')) {
-        return 'restaurant';
-    }
-
-    if (loc.includes('bakery') || loc.includes('bake') || loc.includes('bread')) {
-        return 'bakery';
-    }
-
-    return 'other';
+    return {
+        ...product,
+        quantity: Number(product.quantity) || 0,
+        minQuantity: Number(product.minQuantity) || 5, // Default minimum
+        price: Number(product.price) || 0,
+        category,
+        location // Keep original for reference
+    };
 };
 
-export const filterByLocation = (products: Product[], location: LocationType): Product[] => {
-    return products.filter(product => {
-        const productLocation = normalizeLocation(product.location);
-        return productLocation === location;
-    });
-};
+export const getCategoryCounts = (products: Product[]) => {
+    const counts = {
+        restaurant: 0,
+        bakery: 0,
+        other: 0
+    };
 
-/**
- * Validates if a string is a known location type
- */
-export const isValidLocation = (location: string): location is LocationType => {
-    return LOCATION_TYPES.includes(location as LocationType);
-};
-
-/**
- * Gets all possible location values from an array of products
- */
-export const getAllLocations = (products: Product[]): LocationType[] => {
-    const locations = new Set<LocationType>();
     products.forEach(product => {
-        locations.add(normalizeLocation(product.location));
+        if (product.category === 'restaurant') counts.restaurant++;
+        else if (product.category === 'bakery') counts.bakery++;
+        else counts.other++;
     });
-    return Array.from(locations);
+
+    return counts;
 };
