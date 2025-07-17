@@ -26,7 +26,7 @@ export const Restaurant: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(product => 
+  const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -57,7 +57,7 @@ export const Restaurant: React.FC = () => {
           <CardTitle className="text-lg">Restaurant Total Value</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold text-blue-600">${getTotalValue(filteredProducts)}</p>
+          <p className="text-2xl font-bold text-blue-600">R{getTotalValue(filteredProducts)}</p>
         </CardContent>
       </Card>
 
