@@ -40,7 +40,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
       toast({ title: 'Error', description: 'Only admins can delete products', variant: 'destructive' });
       return;
     }
-    
+
     try {
       const updatedProducts = products.filter(p => p.id !== productId);
       setProducts(updatedProducts);
@@ -63,13 +63,13 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (activeTab === 'all') return matchesSearch;
     if (activeTab === 'restaurant') return matchesSearch && product.location === 'restaurant';
     if (activeTab === 'bakery') return matchesSearch && product.location === 'bakery';
     if (activeTab === 'low-stock') return matchesSearch && product.quantity <= product.minQuantity;
-    
+
     return matchesSearch;
   });
 
@@ -86,7 +86,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
     const isLowStock = product.quantity <= product.minQuantity;
     const [editingQuantity, setEditingQuantity] = useState(false);
     const [newQuantity, setNewQuantity] = useState(product.quantity);
-    
+
     return (
       <Card className={`${isLowStock ? 'border-red-200 bg-red-50' : ''}`}>
         <CardHeader className="pb-3">
@@ -132,7 +132,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
                   }}>Cancel</Button>
                 </div>
               ) : (
-                <span 
+                <span
                   className={`font-medium cursor-pointer ${isLowStock ? 'text-red-600' : ''}`}
                   onClick={() => setEditingQuantity(true)}
                 >
@@ -143,11 +143,11 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Price:</span>
-            <span className="font-medium">${product.price}</span>
+            <span className="font-medium">R{product.price}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Total Value:</span>
-            <span className="font-medium">${(product.price * product.quantity).toFixed(2)}</span>
+            <span className="font-medium">R{(product.price * product.quantity).toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center pt-2">
             <Badge variant={product.location === 'restaurant' ? 'default' : 'secondary'} className="text-xs">{product.location}</Badge>
@@ -174,7 +174,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
             <CardTitle className="text-lg">Total Products Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">${getTotalValue(products)}</p>
+            <p className="text-2xl font-bold text-green-600">R{getTotalValue(products)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -182,7 +182,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
             <CardTitle className="text-lg">Restaurant Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-blue-600">${getTotalValue(restaurantProducts)}</p>
+            <p className="text-2xl font-bold text-blue-600">R{getTotalValue(restaurantProducts)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -190,7 +190,7 @@ export const Products: React.FC<ProductsProps> = ({ onEditProduct }) => {
             <CardTitle className="text-lg">Bakery Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-purple-600">${getTotalValue(bakeryProducts)}</p>
+            <p className="text-2xl font-bold text-purple-600">R{getTotalValue(bakeryProducts)}</p>
           </CardContent>
         </Card>
       </div>
