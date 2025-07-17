@@ -18,21 +18,46 @@ export const Dashboard: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const user = authService.getCurrentUser();
-      if (user) {
-        const profile = await databaseService.getUserProfile(user.id);
-        setCurrentUser({ ...user, ...profile });
-      }
-      
       const allProducts = await databaseService.getProducts();
+      if (!allProducts) throw new Error("No products returned");
+
       setProducts(allProducts);
+
+      // Improved filtering with null checks and case insensitivity
+      const lowStock = allProducts.filter(p =>
+        p.quantity !== undefined &&
+        p.minQuantity !== undefined &&
+        p.quantity <= p.minQuantity
+      );
+
+      const restaurant = allProducts.filter(p =>
+        p.location && String(p.location).toLowerCase() === 'restaurant'
+      );
+
+      const bakery = allProducts.filter(p =>
+        p.location && String(p.location).toLowerCase() === 'bakery'
+      );
+
+      // Value calculations
+      const calculateValue = (items: Product[]) =>
+        items.reduce((sum, p) => sum + ((p.price || 0) * (p.quantity || 0)), 0);
+
+      setStats({
+        totalProducts: allProducts.length,
+        lowStockItems: lowStock.length,
+        restaurantItems: restaurant.length,
+        bakeryItems: bakery.length,
+        totalValue: calculateValue(allProducts),
+        restaurantValue: calculateValue(restaurant),
+        bakeryValue: calculateValue(bakery)
+      });
+
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const restaurantProducts = products.filter(p => p.location === 'restaurant');
   const bakeryProducts = products.filter(p => p.location === 'bakery');
   const lowStockCount = products.filter(p => p.quantity <= p.minQuantity).length;
