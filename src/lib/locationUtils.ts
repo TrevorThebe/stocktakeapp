@@ -2,6 +2,8 @@
  * Utilities for handling product location data normalization and validation
  */
 
+type LocationType = 'restaurant' | 'bakery' | 'other';
+
 export type LocationType = 'restaurant' | 'bakery' | 'store' | 'warehouse' | 'other';
 
 export const LOCATION_TYPES: readonly LocationType[] = [
@@ -17,23 +19,28 @@ export const LOCATION_TYPES: readonly LocationType[] = [
  * @param location Raw location string from database
  * @returns Normalized location type
  */
-export const normalizeLocation = (location: string | null | undefined): LocationType => {
+
+export const normalizeLocation = (location: string | undefined | null): LocationType => {
     if (!location) return 'other';
 
     const loc = location.toLowerCase().trim();
 
-    // Handle common variations
-    if (/rest|resto|dining/.test(loc)) return 'restaurant';
-    if (/bakery|bake|bread|pastry/.test(loc)) return 'bakery';
-    if (/store|shop|retail/.test(loc)) return 'store';
-    if (/warehouse|storage|inventory/.test(loc)) return 'warehouse';
+    if (loc.includes('restaurant') || loc.includes('rest') || loc.includes('dining')) {
+        return 'restaurant';
+    }
 
-    // Return as-is if it matches a known type
-    if (LOCATION_TYPES.includes(loc as LocationType)) {
-        return loc as LocationType;
+    if (loc.includes('bakery') || loc.includes('bake') || loc.includes('bread')) {
+        return 'bakery';
     }
 
     return 'other';
+};
+
+export const filterByLocation = (products: Product[], location: LocationType): Product[] => {
+    return products.filter(product => {
+        const productLocation = normalizeLocation(product.location);
+        return productLocation === location;
+    });
 };
 
 /**
