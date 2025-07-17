@@ -2,13 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { databaseService } from '@/lib/database';
-import { Product, ProductStats } from '@/types/product';
 import { Package, AlertTriangle, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { normalizeLocation } from '@/lib/locationUtils';
 
-const Dashboard: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [stats, setStats] = useState<ProductStats>({
+interface DashboardStats {
+  totalProducts: number;
+  lowStockItems: number;
+  restaurantItems: number;
+  bakeryItems: number;
+  totalValue: number;
+  restaurantValue: number;
+  bakeryValue: number;
+}
+
+export const Dashboard: React.FC = () => {
+  const [products, setProducts] = useState<any[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     lowStockItems: 0,
     restaurantItems: 0,
@@ -28,29 +36,28 @@ const Dashboard: React.FC = () => {
       const allProducts = await databaseService.getProducts();
       setProducts(allProducts);
 
-      // Get location-specific products
-      const [restaurantProducts, bakeryProducts] = await Promise.all([
-        databaseService.getProductsByLocation('restaurant'),
-        databaseService.getProductsByLocation('bakery')
-      ]);
+      // Debugging output
+      console.log('Fetched products:', allProducts);
+      console.log('Unique locations:', [...new Set(allProducts.map(p => p.location))]);
 
-      // Calculate low stock items
+      // Filter products
       const lowStock = allProducts.filter(p => p.quantity <= p.minQuantity);
+      const restaurant = allProducts.filter(p => p.location.includes('restaurant'));
+      const bakery = allProducts.filter(p => p.location.includes('bakery'));
 
-      // Calculate inventory values
-      const calculateValue = (items: Product[]) =>
+      // Calculate values
+      const calculateValue = (items: any[]) =>
         items.reduce((sum, p) => sum + (p.price * p.quantity), 0);
 
       setStats({
         totalProducts: allProducts.length,
         lowStockItems: lowStock.length,
-        restaurantItems: restaurantProducts.length,
-        bakeryItems: bakeryProducts.length,
+        restaurantItems: restaurant.length,
+        bakeryItems: bakery.length,
         totalValue: calculateValue(allProducts),
-        restaurantValue: calculateValue(restaurantProducts),
-        bakeryValue: calculateValue(bakeryProducts)
+        restaurantValue: calculateValue(restaurant),
+        bakeryValue: calculateValue(bakery)
       });
-
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -76,6 +83,7 @@ const Dashboard: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Products */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Products</CardTitle>
@@ -86,6 +94,7 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Low Stock Items */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
@@ -95,14 +104,13 @@ const Dashboard: React.FC = () => {
             <div className="text-2xl font-bold text-red-600">
               {stats.lowStockItems}
               {stats.lowStockItems > 0 && (
-                <span className="text-xs ml-2 text-red-500">
-                  ({Math.round((stats.lowStockItems / stats.totalProducts) * 100)}%)
-                </span>
+                <span className="text-xs ml-2 text-red-500">({Math.round((stats.lowStockItems / stats.totalProducts) * 100)}%)</span>
               )}
             </div>
           </CardContent>
         </Card>
 
+        {/* Restaurant Items */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Restaurant Items</CardTitle>
@@ -118,6 +126,7 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Bakery Items */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Bakery Items</CardTitle>
@@ -156,6 +165,9 @@ const Dashboard: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
               ${stats.restaurantValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <span className="text-xs ml-2 text-muted-foreground">
+                ({Math.round((stats.restaurantValue / stats.totalValue) * 100)}%)
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -168,26 +180,29 @@ const Dashboard: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
               ${stats.bakeryValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <span className="text-xs ml-2 text-muted-foreground">
+                ({Math.round((stats.bakeryValue / stats.totalValue) * 100)}%)
+              </span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Low Stock Alert */}
+      {/* Low Stock Alert Section */}
       {lowStockProducts.length > 0 && (
-        <Card className="border-red-100">
+        <Card className="border-red-200">
           <CardHeader className="bg-red-50 rounded-t-lg">
             <CardTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="h-5 w-5" />
-              Low Stock Alerts ({lowStockProducts.length})
+              Low Stock Alert ({lowStockProducts.length} items)
             </CardTitle>
             <CardDescription className="text-red-500">
-              Items below minimum quantity
+              Items that need immediate attention
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-red-100">
-              {lowStockProducts.slice(0, 5).map(product => (
+              {lowStockProducts.slice(0, 5).map((product) => (
                 <div key={product.id} className="flex items-center justify-between p-4 hover:bg-red-50">
                   <div className="flex items-center space-x-4">
                     <div className="flex-1 min-w-0">
@@ -197,7 +212,7 @@ const Dashboard: React.FC = () => {
                           {product.location}
                         </Badge>
                         <span className="text-xs text-gray-500">
-                          Stock: {product.quantity} | Min: {product.minQuantity}
+                          Current: {product.quantity} | Min: {product.minQuantity}
                         </span>
                       </div>
                     </div>
@@ -216,5 +231,3 @@ const Dashboard: React.FC = () => {
     </div>
   );
 };
-
-export default Dashboard; 
