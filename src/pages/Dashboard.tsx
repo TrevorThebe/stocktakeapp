@@ -2,12 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { databaseService } from '@/lib/database';
-import { Product } from '@/types';
 import { Package, AlertTriangle, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 
+interface DashboardStats {
+  totalProducts: number;
+  lowStockItems: number;
+  restaurantItems: number;
+  bakeryItems: number;
+  totalValue: number;
+  restaurantValue: number;
+  bakeryValue: number;
+}
+
 export const Dashboard: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [stats, setStats] = useState({
+  const [products, setProducts] = useState<any[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     lowStockItems: 0,
     restaurantItems: 0,
@@ -26,23 +35,28 @@ export const Dashboard: React.FC = () => {
     try {
       const allProducts = await databaseService.getProducts();
       setProducts(allProducts);
-      
+
+      // Debugging output
+      console.log('Fetched products:', allProducts);
+      console.log('Unique locations:', [...new Set(allProducts.map(p => p.location))]);
+
+      // Filter products
       const lowStock = allProducts.filter(p => p.quantity <= p.minQuantity);
-      const restaurant = allProducts.filter(p => p.location === 'restaurant');
-      const bakery = allProducts.filter(p => p.location === 'bakery');
-      
-      const totalValue = allProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
-      const restaurantValue = restaurant.reduce((sum, p) => sum + (p.price * p.quantity), 0);
-      const bakeryValue = bakery.reduce((sum, p) => sum + (p.price * p.quantity), 0);
-      
+      const restaurant = allProducts.filter(p => p.location.includes('restaurant'));
+      const bakery = allProducts.filter(p => p.location.includes('bakery'));
+
+      // Calculate values
+      const calculateValue = (items: any[]) =>
+        items.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+
       setStats({
         totalProducts: allProducts.length,
         lowStockItems: lowStock.length,
         restaurantItems: restaurant.length,
         bakeryItems: bakery.length,
-        totalValue,
-        restaurantValue,
-        bakeryValue
+        totalValue: calculateValue(allProducts),
+        restaurantValue: calculateValue(restaurant),
+        bakeryValue: calculateValue(bakery)
       });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -64,11 +78,12 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Inventory Dashboard</h1>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Products */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Products</CardTitle>
@@ -78,34 +93,52 @@ export const Dashboard: React.FC = () => {
             <div className="text-2xl font-bold">{stats.totalProducts}</div>
           </CardContent>
         </Card>
-        
+
+        {/* Low Stock Items */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.lowStockItems}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {stats.lowStockItems}
+              {stats.lowStockItems > 0 && (
+                <span className="text-xs ml-2 text-red-500">({Math.round((stats.lowStockItems / stats.totalProducts) * 100)}%)</span>
+              )}
+            </div>
           </CardContent>
         </Card>
-        
+
+        {/* Restaurant Items */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Restaurant Items</CardTitle>
             <TrendingUp className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.restaurantItems}</div>
+            <div className="text-2xl font-bold">
+              {stats.restaurantItems}
+              <span className="text-xs ml-2 text-muted-foreground">
+                ({Math.round((stats.restaurantItems / stats.totalProducts) * 100)}%)
+              </span>
+            </div>
           </CardContent>
         </Card>
-        
+
+        {/* Bakery Items */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Bakery Items</CardTitle>
             <TrendingDown className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.bakeryItems}</div>
+            <div className="text-2xl font-bold">
+              {stats.bakeryItems}
+              <span className="text-xs ml-2 text-muted-foreground">
+                ({Math.round((stats.bakeryItems / stats.totalProducts) * 100)}%)
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -118,59 +151,76 @@ export const Dashboard: React.FC = () => {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${stats.totalValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-green-600">
+              ${stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Restaurant Value</CardTitle>
             <DollarSign className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">${stats.restaurantValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              ${stats.restaurantValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <span className="text-xs ml-2 text-muted-foreground">
+                ({Math.round((stats.restaurantValue / stats.totalValue) * 100)}%)
+              </span>
+            </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Bakery Value</CardTitle>
             <DollarSign className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">${stats.bakeryValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-purple-600">
+              ${stats.bakeryValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <span className="text-xs ml-2 text-muted-foreground">
+                ({Math.round((stats.bakeryValue / stats.totalValue) * 100)}%)
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Low Stock Alert */}
+      {/* Low Stock Alert Section */}
       {lowStockProducts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Low Stock Alert
+        <Card className="border-red-200">
+          <CardHeader className="bg-red-50 rounded-t-lg">
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Low Stock Alert ({lowStockProducts.length} items)
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-red-500">
               Items that need immediate attention
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-0">
+            <div className="divide-y divide-red-100">
               {lowStockProducts.slice(0, 5).map((product) => (
-                <div key={product.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                  <div>
-                    <h4 className="font-medium">{product.name}</h4>
-                    <p className="text-sm text-gray-600">{product.location}</p>
-                    <p className="text-sm text-gray-500">Value: ${(product.price * product.quantity).toFixed(2)}</p>
+                <div key={product.id} className="flex items-center justify-between p-4 hover:bg-red-50">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 truncate">{product.name}</h4>
+                      <div className="flex space-x-2 mt-1">
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {product.location}
+                        </Badge>
+                        <span className="text-xs text-gray-500">
+                          Current: {product.quantity} | Min: {product.minQuantity}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <Badge variant="destructive">
-                      {product.quantity} left
+                    <Badge variant="destructive" className="px-3 py-1">
+                      ${(product.price * product.quantity).toFixed(2)}
                     </Badge>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Min: {product.minQuantity}
-                    </p>
                   </div>
                 </div>
               ))}
