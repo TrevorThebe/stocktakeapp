@@ -33,7 +33,7 @@ export const MainApp: React.FC = () => {
   const initializeApp = async () => {
     try {
       const users = await databaseService.getUsers();
-      
+
       if (users.length === 0) {
         const superUser: User = {
           id: uuidv4(),
@@ -58,7 +58,7 @@ export const MainApp: React.FC = () => {
         await databaseService.saveUser(superUser);
         await databaseService.saveUser(adminUser);
       }
-      
+
       const products = await databaseService.getProducts();
       if (products.length === 0) {
         const sampleProducts: Product[] = [
@@ -92,7 +92,7 @@ export const MainApp: React.FC = () => {
     } catch (error) {
       console.error('Error initializing app:', error);
     }
-    
+
     const user = authService.getCurrentUser();
     setCurrentUser(user);
     setIsLoading(false);
@@ -144,10 +144,10 @@ export const MainApp: React.FC = () => {
       case 'chat':
         return <Chat />;
       case 'user-management':
-        return (currentUser.role === 'admin' || currentUser.role === 'super') ? 
+        return (currentUser.role === 'admin' || currentUser.role === 'super') ?
           <UserManagement /> : <Dashboard />;
       case 'users':
-        return (currentUser.role === 'admin' || currentUser.role === 'super') ? 
+        return (currentUser.role === 'admin' || currentUser.role === 'super') ?
           <Admin currentUser={currentUser} /> : <Dashboard />;
       default:
         return <Dashboard />;
@@ -175,12 +175,12 @@ export const MainApp: React.FC = () => {
     <>
       <div className="flex h-screen bg-gray-50">
         {sidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
-        
+
         <div className={`
           fixed lg:static inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
@@ -195,7 +195,7 @@ export const MainApp: React.FC = () => {
             onLogout={handleLogout}
           />
         </div>
-        
+
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
             <button
@@ -207,7 +207,7 @@ export const MainApp: React.FC = () => {
             <h1 className="text-lg font-semibold text-gray-900">CD Stock</h1>
             <div className="w-10" />
           </div>
-          
+
           <div className="flex-1 overflow-auto">
             {renderActiveView()}
           </div>

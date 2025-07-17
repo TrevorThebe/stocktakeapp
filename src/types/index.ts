@@ -1,4 +1,4 @@
-export interface User {
+Zexport interface User {
   id: string;
   email: string;
   name: string;
